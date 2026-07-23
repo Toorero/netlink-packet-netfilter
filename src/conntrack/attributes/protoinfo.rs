@@ -57,7 +57,7 @@ impl<'buffer, T: AsRef<[u8]> + ?Sized> Parseable<NlaBuffer<&'buffer T>>
                 let mut proto_info_tcps = Vec::new();
                 for nlas in NlasIterator::new(payload) {
                     let nlas =
-                        &nlas.context("invailid CTA_PROTOINFO_TCP value")?;
+                        &nlas.context("invalid CTA_PROTOINFO_TCP value")?;
                     proto_info_tcps.push(ProtoInfoTCP::parse(nlas)?);
                 }
                 ProtoInfo::TCP(proto_info_tcps)
