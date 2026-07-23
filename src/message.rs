@@ -8,6 +8,7 @@ use netlink_packet_core::{
 
 use crate::{
     buffer::NetfilterBuffer, conntrack::ConntrackMessage, nflog::ULogMessage,
+    nftables::NfTablesMessage,
 };
 
 // ProtoFamily represents a protocol family in the Netfilter header (nfgenmsg).
@@ -119,12 +120,14 @@ impl<T: AsRef<[u8]>> Parseable<NetfilterHeaderBuffer<T>> for NetfilterHeader {
 // Defined in Linux kernel: include/uapi/linux/netfilter/nfnetlink.h
 pub const NFNL_SUBSYS_CTNETLINK: u8 = 1;
 pub const NFNL_SUBSYS_ULOG: u8 = 4;
+pub const NFNL_SUBSYS_NFTABLES: u8 = 10;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[non_exhaustive]
 pub enum Subsystem {
     ULog,
     Conntrack,
+    NfTables,
     Other(u8),
 }
 
@@ -133,6 +136,7 @@ impl From<u8> for Subsystem {
         match value {
             NFNL_SUBSYS_ULOG => Self::ULog,
             NFNL_SUBSYS_CTNETLINK => Self::Conntrack,
+            NFNL_SUBSYS_NFTABLES => Self::NfTables,
             v => Self::Other(v),
         }
     }
@@ -143,6 +147,7 @@ impl From<Subsystem> for u8 {
         match value {
             Subsystem::ULog => NFNL_SUBSYS_ULOG,
             Subsystem::Conntrack => NFNL_SUBSYS_CTNETLINK,
+            Subsystem::NfTables => NFNL_SUBSYS_NFTABLES,
             Subsystem::Other(v) => v,
         }
     }
@@ -153,6 +158,7 @@ impl From<Subsystem> for u8 {
 pub enum NetfilterMessageInner {
     ULog(ULogMessage),
     Conntrack(ConntrackMessage),
+    NfTables(NfTablesMessage),
     Other {
         subsys: Subsystem,
         message_type: u8,
@@ -176,6 +182,7 @@ impl Emitable for NetfilterMessageInner {
         match self {
             NetfilterMessageInner::ULog(message) => message.buffer_len(),
             NetfilterMessageInner::Conntrack(message) => message.buffer_len(),
+            NetfilterMessageInner::NfTables(message) => message.buffer_len(),
             NetfilterMessageInner::Other { attributes, .. } => {
                 attributes.as_slice().buffer_len()
             }
@@ -186,6 +193,7 @@ impl Emitable for NetfilterMessageInner {
         match self {
             NetfilterMessageInner::ULog(message) => message.emit(buffer),
             NetfilterMessageInner::Conntrack(message) => message.emit(buffer),
+            NetfilterMessageInner::NfTables(message) => message.emit(buffer),
             NetfilterMessageInner::Other { attributes, .. } => {
                 attributes.as_slice().emit(buffer)
             }
@@ -215,6 +223,7 @@ impl NetfilterMessage {
         match self.inner {
             NetfilterMessageInner::ULog(_) => Subsystem::ULog,
             NetfilterMessageInner::Conntrack(_) => Subsystem::Conntrack,
+            NetfilterMessageInner::NfTables(_) => Subsystem::NfTables,
             NetfilterMessageInner::Other { subsys, .. } => subsys,
         }
     }
@@ -225,6 +234,9 @@ impl NetfilterMessage {
                 message.message_type().into()
             }
             NetfilterMessageInner::Conntrack(ref message) => {
+                message.message_type().into()
+            }
+            NetfilterMessageInner::NfTables(ref message) => {
                 message.message_type().into()
             }
             NetfilterMessageInner::Other { message_type, .. } => message_type,

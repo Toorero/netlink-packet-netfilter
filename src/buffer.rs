@@ -7,6 +7,7 @@ use crate::{
         NETFILTER_HEADER_LEN,
     },
     nflog::ULogMessage,
+    nftables::NfTablesMessage,
 };
 use netlink_packet_core::{
     buffer, fields, DecodeError, DefaultNla, ErrorContext, NlaBuffer,
@@ -61,6 +62,10 @@ impl<'a, T: AsRef<[u8]> + ?Sized>
             Subsystem::Conntrack => NetfilterMessageInner::Conntrack(
                 ConntrackMessage::parse_with_param(buf, message_type)
                     .context("failed to parse conntrack payload")?,
+            ),
+            Subsystem::NfTables => NetfilterMessageInner::NfTables(
+                NfTablesMessage::parse_with_param(buf, message_type)
+                    .context("failed to parse nftables payload")?,
             ),
             subsys_enum @ Subsystem::Other(_) => NetfilterMessageInner::Other {
                 subsys: subsys_enum,

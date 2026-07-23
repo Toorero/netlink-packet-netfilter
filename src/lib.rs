@@ -9,5 +9,6 @@ pub use message::{
 };
 pub mod conntrack;
 pub mod nflog;
+pub mod nftables;
 #[cfg(test)]
 mod tests;
