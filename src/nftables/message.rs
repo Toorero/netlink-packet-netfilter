@@ -1,37 +1,45 @@
 // SPDX-License-Identifier: MIT
 
-use crate::{buffer::NetfilterBuffer, nftables::attributes::NfTablesAttribute};
+use crate::{
+    buffer::NetfilterBuffer,
+    nftables::{
+        chain::ChainMessage, r#gen::GenMessage, rule::RuleMessage,
+        set::SetMessage, set_element::SetElementMessage, table::TableMessage,
+    },
+};
+
 use netlink_packet_core::{
-    DecodeError, DefaultNla, Emitable, Parseable, ParseableParametrized,
+    DecodeError, DefaultNla, Emitable, ErrorContext as _, Parseable,
+    ParseableParametrized,
 };
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[non_exhaustive]
 pub enum NfTablesMessage {
-    NewTable(Vec<NfTablesAttribute>),
-    GetTable(Vec<NfTablesAttribute>),
-    DeleteTable(Vec<NfTablesAttribute>),
-    NewChain(Vec<NfTablesAttribute>),
-    GetChain(Vec<NfTablesAttribute>),
-    DeleteChain(Vec<NfTablesAttribute>),
-    NewRule(Vec<NfTablesAttribute>),
-    GetRule(Vec<NfTablesAttribute>),
-    DeleteRule(Vec<NfTablesAttribute>),
-    NewSet(Vec<NfTablesAttribute>),
-    GetSet(Vec<NfTablesAttribute>),
-    DeleteSet(Vec<NfTablesAttribute>),
-    NewSetElement(Vec<NfTablesAttribute>),
-    GetSetElement(Vec<NfTablesAttribute>),
-    DeleteSetElement(Vec<NfTablesAttribute>),
-    NewGen(Vec<NfTablesAttribute>),
-    GetGen(Vec<NfTablesAttribute>),
-    Trace(Vec<NfTablesAttribute>),
-    NewObject(Vec<NfTablesAttribute>),
-    GetObject(Vec<NfTablesAttribute>),
-    DeleteObject(Vec<NfTablesAttribute>),
-    NewFlowTable(Vec<NfTablesAttribute>),
-    GetFlowTable(Vec<NfTablesAttribute>),
-    DeleteFlowTable(Vec<NfTablesAttribute>),
+    NewTable(TableMessage),
+    GetTable(TableMessage),
+    DeleteTable(TableMessage),
+    NewChain(ChainMessage),
+    GetChain(ChainMessage),
+    DeleteChain(ChainMessage),
+    NewRule(RuleMessage),
+    GetRule(RuleMessage),
+    DeleteRule(RuleMessage),
+    NewSet(SetMessage),
+    GetSet(SetMessage),
+    DeleteSet(SetMessage),
+    NewSetElement(SetElementMessage),
+    GetSetElement(SetElementMessage),
+    DeleteSetElement(SetElementMessage),
+    NewGen(GenMessage),
+    GetGen(GenMessage),
+    Trace(Vec<DefaultNla>),
+    NewObject(Vec<DefaultNla>),
+    GetObject(Vec<DefaultNla>),
+    DeleteObject(Vec<DefaultNla>),
+    NewFlowTable(Vec<DefaultNla>),
+    GetFlowTable(Vec<DefaultNla>),
+    DeleteFlowTable(Vec<DefaultNla>),
     Other {
         message_type: u8,
         attributes: Vec<DefaultNla>,
@@ -184,7 +192,7 @@ impl NfTablesMessage {
             Self::NewSet(_) => NfTablesMessageType::NewSet,
             Self::GetSet(_) => NfTablesMessageType::GetSet,
             Self::DeleteSet(_) => NfTablesMessageType::DeleteSet,
-            Self::NewSetElement(_) => NfTablesMessageType::NewSet,
+            Self::NewSetElement(_) => NfTablesMessageType::NewSetElement,
             Self::GetSetElement(_) => NfTablesMessageType::GetSetElement,
             Self::DeleteSetElement(_) => NfTablesMessageType::DeleteSetElement,
             Self::NewGen(_) => NfTablesMessageType::NewGen,
@@ -204,55 +212,55 @@ impl NfTablesMessage {
 impl Emitable for NfTablesMessage {
     fn buffer_len(&self) -> usize {
         match self {
-            NfTablesMessage::NewTable(attributes) => {
+            NfTablesMessage::NewTable(TableMessage { attributes }) => {
                 attributes.as_slice().buffer_len()
             }
-            NfTablesMessage::GetTable(attributes) => {
+            NfTablesMessage::GetTable(TableMessage { attributes }) => {
                 attributes.as_slice().buffer_len()
             }
-            NfTablesMessage::DeleteTable(attributes) => {
+            NfTablesMessage::DeleteTable(TableMessage { attributes }) => {
                 attributes.as_slice().buffer_len()
             }
-            NfTablesMessage::NewChain(attributes) => {
+            NfTablesMessage::NewChain(ChainMessage { attributes }) => {
                 attributes.as_slice().buffer_len()
             }
-            NfTablesMessage::GetChain(attributes) => {
+            NfTablesMessage::GetChain(ChainMessage { attributes }) => {
                 attributes.as_slice().buffer_len()
             }
-            NfTablesMessage::DeleteChain(attributes) => {
+            NfTablesMessage::DeleteChain(ChainMessage { attributes }) => {
                 attributes.as_slice().buffer_len()
             }
-            NfTablesMessage::NewRule(attributes) => {
+            NfTablesMessage::NewRule(RuleMessage { attributes }) => {
                 attributes.as_slice().buffer_len()
             }
-            NfTablesMessage::GetRule(attributes) => {
+            NfTablesMessage::GetRule(RuleMessage { attributes }) => {
                 attributes.as_slice().buffer_len()
             }
-            NfTablesMessage::DeleteRule(attributes) => {
+            NfTablesMessage::DeleteRule(RuleMessage { attributes }) => {
                 attributes.as_slice().buffer_len()
             }
-            NfTablesMessage::NewSet(attributes) => {
+            NfTablesMessage::NewSet(SetMessage { attributes }) => {
                 attributes.as_slice().buffer_len()
             }
-            NfTablesMessage::GetSet(attributes) => {
+            NfTablesMessage::GetSet(SetMessage { attributes }) => {
                 attributes.as_slice().buffer_len()
             }
-            NfTablesMessage::DeleteSet(attributes) => {
+            NfTablesMessage::DeleteSet(SetMessage { attributes }) => {
                 attributes.as_slice().buffer_len()
             }
-            NfTablesMessage::NewSetElement(attributes) => {
+            NfTablesMessage::NewSetElement(SetElementMessage {
+                attributes,
+            }) => attributes.as_slice().buffer_len(),
+            NfTablesMessage::GetSetElement(SetElementMessage {
+                attributes,
+            }) => attributes.as_slice().buffer_len(),
+            NfTablesMessage::DeleteSetElement(SetElementMessage {
+                attributes,
+            }) => attributes.as_slice().buffer_len(),
+            NfTablesMessage::NewGen(GenMessage { attributes }) => {
                 attributes.as_slice().buffer_len()
             }
-            NfTablesMessage::GetSetElement(attributes) => {
-                attributes.as_slice().buffer_len()
-            }
-            NfTablesMessage::DeleteSetElement(attributes) => {
-                attributes.as_slice().buffer_len()
-            }
-            NfTablesMessage::NewGen(attributes) => {
-                attributes.as_slice().buffer_len()
-            }
-            NfTablesMessage::GetGen(attributes) => {
+            NfTablesMessage::GetGen(GenMessage { attributes }) => {
                 attributes.as_slice().buffer_len()
             }
             NfTablesMessage::Trace(attributes) => {
@@ -284,55 +292,55 @@ impl Emitable for NfTablesMessage {
 
     fn emit(&self, buffer: &mut [u8]) {
         match self {
-            NfTablesMessage::NewTable(attributes) => {
+            NfTablesMessage::NewTable(TableMessage { attributes }) => {
                 attributes.as_slice().emit(buffer)
             }
-            NfTablesMessage::GetTable(attributes) => {
+            NfTablesMessage::GetTable(TableMessage { attributes }) => {
                 attributes.as_slice().emit(buffer)
             }
-            NfTablesMessage::DeleteTable(attributes) => {
+            NfTablesMessage::DeleteTable(TableMessage { attributes }) => {
                 attributes.as_slice().emit(buffer)
             }
-            NfTablesMessage::NewChain(attributes) => {
+            NfTablesMessage::NewChain(ChainMessage { attributes }) => {
                 attributes.as_slice().emit(buffer)
             }
-            NfTablesMessage::GetChain(attributes) => {
+            NfTablesMessage::GetChain(ChainMessage { attributes }) => {
                 attributes.as_slice().emit(buffer)
             }
-            NfTablesMessage::DeleteChain(attributes) => {
+            NfTablesMessage::DeleteChain(ChainMessage { attributes }) => {
                 attributes.as_slice().emit(buffer)
             }
-            NfTablesMessage::NewRule(attributes) => {
+            NfTablesMessage::NewRule(RuleMessage { attributes }) => {
                 attributes.as_slice().emit(buffer)
             }
-            NfTablesMessage::GetRule(attributes) => {
+            NfTablesMessage::GetRule(RuleMessage { attributes }) => {
                 attributes.as_slice().emit(buffer)
             }
-            NfTablesMessage::DeleteRule(attributes) => {
+            NfTablesMessage::DeleteRule(RuleMessage { attributes }) => {
                 attributes.as_slice().emit(buffer)
             }
-            NfTablesMessage::NewSet(attributes) => {
+            NfTablesMessage::NewSet(SetMessage { attributes }) => {
                 attributes.as_slice().emit(buffer)
             }
-            NfTablesMessage::GetSet(attributes) => {
+            NfTablesMessage::GetSet(SetMessage { attributes }) => {
                 attributes.as_slice().emit(buffer)
             }
-            NfTablesMessage::DeleteSet(attributes) => {
+            NfTablesMessage::DeleteSet(SetMessage { attributes }) => {
                 attributes.as_slice().emit(buffer)
             }
-            NfTablesMessage::NewSetElement(attributes) => {
+            NfTablesMessage::NewSetElement(SetElementMessage {
+                attributes,
+            }) => attributes.as_slice().emit(buffer),
+            NfTablesMessage::GetSetElement(SetElementMessage {
+                attributes,
+            }) => attributes.as_slice().emit(buffer),
+            NfTablesMessage::DeleteSetElement(SetElementMessage {
+                attributes,
+            }) => attributes.as_slice().emit(buffer),
+            NfTablesMessage::NewGen(GenMessage { attributes }) => {
                 attributes.as_slice().emit(buffer)
             }
-            NfTablesMessage::GetSetElement(attributes) => {
-                attributes.as_slice().emit(buffer)
-            }
-            NfTablesMessage::DeleteSetElement(attributes) => {
-                attributes.as_slice().emit(buffer)
-            }
-            NfTablesMessage::NewGen(attributes) => {
-                attributes.as_slice().emit(buffer)
-            }
-            NfTablesMessage::GetGen(attributes) => {
+            NfTablesMessage::GetGen(GenMessage { attributes }) => {
                 attributes.as_slice().emit(buffer)
             }
             NfTablesMessage::Trace(attributes) => {
@@ -372,152 +380,100 @@ impl<'a, T: AsRef<[u8]> + ?Sized>
     ) -> Result<Self, DecodeError> {
         Ok(match NfTablesMessageType::from(message_type) {
             NfTablesMessageType::NewTable => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::NewTable(attributes)
+                Self::NewTable(TableMessage::parse(buf)?)
             }
             NfTablesMessageType::GetTable => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::GetTable(attributes)
+                Self::GetTable(TableMessage::parse(buf)?)
             }
             NfTablesMessageType::DeleteTable => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::DeleteTable(attributes)
+                Self::DeleteTable(TableMessage::parse(buf)?)
             }
+
             NfTablesMessageType::NewChain => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::NewChain(attributes)
+                Self::NewChain(ChainMessage::parse(buf)?)
             }
             NfTablesMessageType::GetChain => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::GetChain(attributes)
+                Self::GetChain(ChainMessage::parse(buf)?)
             }
             NfTablesMessageType::DeleteChain => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::DeleteChain(attributes)
+                Self::DeleteChain(ChainMessage::parse(buf)?)
             }
+
             NfTablesMessageType::NewRule => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::NewRule(attributes)
+                Self::NewRule(RuleMessage::parse(buf)?)
             }
             NfTablesMessageType::GetRule => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::GetRule(attributes)
+                Self::GetRule(RuleMessage::parse(buf)?)
             }
             NfTablesMessageType::DeleteRule => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::DeleteRule(attributes)
+                Self::DeleteRule(RuleMessage::parse(buf)?)
             }
+
             NfTablesMessageType::NewSet => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::NewSet(attributes)
+                Self::NewSet(SetMessage::parse(buf)?)
             }
             NfTablesMessageType::GetSet => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::GetSet(attributes)
+                Self::GetSet(SetMessage::parse(buf)?)
             }
             NfTablesMessageType::DeleteSet => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::DeleteSet(attributes)
+                Self::DeleteSet(SetMessage::parse(buf)?)
             }
+
             NfTablesMessageType::NewSetElement => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::NewSetElement(attributes)
+                Self::NewSetElement(SetElementMessage::parse(buf)?)
             }
             NfTablesMessageType::GetSetElement => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::GetSetElement(attributes)
+                Self::GetSetElement(SetElementMessage::parse(buf)?)
             }
             NfTablesMessageType::DeleteSetElement => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::DeleteSetElement(attributes)
+                Self::DeleteSetElement(SetElementMessage::parse(buf)?)
             }
+
             NfTablesMessageType::NewGen => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::NewGen(attributes)
+                Self::NewGen(GenMessage::parse(buf)?)
             }
             NfTablesMessageType::GetGen => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::GetGen(attributes)
+                Self::GetGen(GenMessage::parse(buf)?)
             }
-            NfTablesMessageType::Trace => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::Trace(attributes)
-            }
-            NfTablesMessageType::NewObject => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::NewObject(attributes)
-            }
-            NfTablesMessageType::GetObject => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::GetObject(attributes)
-            }
-            NfTablesMessageType::DeleteObject => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::DeleteObject(attributes)
-            }
-            NfTablesMessageType::NewFlowTable => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::NewFlowTable(attributes)
-            }
-            NfTablesMessageType::GetFlowTable => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::GetFlowTable(attributes)
-            }
+
+            NfTablesMessageType::Trace => NfTablesMessage::Trace(
+                buf.default_nlas()
+                    .context("failed to parse trace message nla")?,
+            ),
+
+            NfTablesMessageType::NewObject => NfTablesMessage::NewObject(
+                buf.default_nlas()
+                    .context("failed to parse object message nla")?,
+            ),
+            NfTablesMessageType::GetObject => NfTablesMessage::GetObject(
+                buf.default_nlas()
+                    .context("failed to parse object message nla")?,
+            ),
+            NfTablesMessageType::DeleteObject => NfTablesMessage::DeleteObject(
+                buf.default_nlas()
+                    .context("failed to parse trace object message nla")?,
+            ),
+
+            NfTablesMessageType::NewFlowTable => NfTablesMessage::NewFlowTable(
+                buf.default_nlas()
+                    .context("failed to parse trace flow table message nla")?,
+            ),
+            NfTablesMessageType::GetFlowTable => NfTablesMessage::GetFlowTable(
+                buf.default_nlas()
+                    .context("failed to parse trace flow table message nla")?,
+            ),
             NfTablesMessageType::DeleteFlowTable => {
-                let attributes = buf.parse_all_nlas(|nla_buf| {
-                    NfTablesAttribute::parse(&nla_buf)
-                })?;
-                NfTablesMessage::DeleteFlowTable(attributes)
+                NfTablesMessage::DeleteFlowTable(
+                    buf.default_nlas().context(
+                        "failed to parse trace flow table message nla",
+                    )?,
+                )
             }
+
             NfTablesMessageType::Other(message_type) => {
-                let attributes =
-                    buf.parse_all_nlas(|nla_buf| DefaultNla::parse(&nla_buf))?;
+                let attributes = buf
+                    .default_nlas()
+                    .context("failed to parse message nla")?;
                 NfTablesMessage::Other {
                     message_type,
                     attributes,

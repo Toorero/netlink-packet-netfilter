@@ -8,7 +8,7 @@ use netlink_packet_core::{
 
 use crate::{
     buffer::NetfilterBuffer, conntrack::ConntrackMessage, nflog::ULogMessage,
-    nftables::NfTablesMessage,
+    nftables::NfTablesMessage, none::ControlMessage,
 };
 
 // ProtoFamily represents a protocol family in the Netfilter header (nfgenmsg).
@@ -118,6 +118,7 @@ impl<T: AsRef<[u8]>> Parseable<NetfilterHeaderBuffer<T>> for NetfilterHeader {
 }
 
 // Defined in Linux kernel: include/uapi/linux/netfilter/nfnetlink.h
+pub const NFNL_SUBSYS_NONE: u8 = 0;
 pub const NFNL_SUBSYS_CTNETLINK: u8 = 1;
 pub const NFNL_SUBSYS_ULOG: u8 = 4;
 pub const NFNL_SUBSYS_NFTABLES: u8 = 10;
@@ -125,6 +126,7 @@ pub const NFNL_SUBSYS_NFTABLES: u8 = 10;
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 #[non_exhaustive]
 pub enum Subsystem {
+    None,
     ULog,
     Conntrack,
     NfTables,
@@ -134,6 +136,7 @@ pub enum Subsystem {
 impl From<u8> for Subsystem {
     fn from(value: u8) -> Self {
         match value {
+            NFNL_SUBSYS_NONE => Self::None,
             NFNL_SUBSYS_ULOG => Self::ULog,
             NFNL_SUBSYS_CTNETLINK => Self::Conntrack,
             NFNL_SUBSYS_NFTABLES => Self::NfTables,
@@ -145,6 +148,7 @@ impl From<u8> for Subsystem {
 impl From<Subsystem> for u8 {
     fn from(value: Subsystem) -> Self {
         match value {
+            Subsystem::None => NFNL_SUBSYS_NONE,
             Subsystem::ULog => NFNL_SUBSYS_ULOG,
             Subsystem::Conntrack => NFNL_SUBSYS_CTNETLINK,
             Subsystem::NfTables => NFNL_SUBSYS_NFTABLES,
@@ -156,6 +160,7 @@ impl From<Subsystem> for u8 {
 #[derive(Debug, PartialEq, Eq, Clone)]
 #[non_exhaustive]
 pub enum NetfilterMessageInner {
+    None(ControlMessage),
     ULog(ULogMessage),
     Conntrack(ConntrackMessage),
     NfTables(NfTablesMessage),
@@ -177,9 +182,22 @@ impl From<ConntrackMessage> for NetfilterMessageInner {
     }
 }
 
+impl From<NfTablesMessage> for NetfilterMessageInner {
+    fn from(message: NfTablesMessage) -> Self {
+        Self::NfTables(message)
+    }
+}
+
+impl From<ControlMessage> for NetfilterMessageInner {
+    fn from(message: ControlMessage) -> Self {
+        Self::None(message)
+    }
+}
+
 impl Emitable for NetfilterMessageInner {
     fn buffer_len(&self) -> usize {
         match self {
+            NetfilterMessageInner::None(message) => message.buffer_len(),
             NetfilterMessageInner::ULog(message) => message.buffer_len(),
             NetfilterMessageInner::Conntrack(message) => message.buffer_len(),
             NetfilterMessageInner::NfTables(message) => message.buffer_len(),
@@ -191,6 +209,7 @@ impl Emitable for NetfilterMessageInner {
 
     fn emit(&self, buffer: &mut [u8]) {
         match self {
+            NetfilterMessageInner::None(message) => message.emit(buffer),
             NetfilterMessageInner::ULog(message) => message.emit(buffer),
             NetfilterMessageInner::Conntrack(message) => message.emit(buffer),
             NetfilterMessageInner::NfTables(message) => message.emit(buffer),
@@ -221,6 +240,7 @@ impl NetfilterMessage {
 
     pub fn subsys(&self) -> Subsystem {
         match self.inner {
+            NetfilterMessageInner::None(_) => Subsystem::None,
             NetfilterMessageInner::ULog(_) => Subsystem::ULog,
             NetfilterMessageInner::Conntrack(_) => Subsystem::Conntrack,
             NetfilterMessageInner::NfTables(_) => Subsystem::NfTables,
@@ -230,6 +250,9 @@ impl NetfilterMessage {
 
     fn message_type(&self) -> u8 {
         match self.inner {
+            NetfilterMessageInner::None(ref message) => {
+                message.message_type().into()
+            }
             NetfilterMessageInner::ULog(ref message) => {
                 message.message_type().into()
             }

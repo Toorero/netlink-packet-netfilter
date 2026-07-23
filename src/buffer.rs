@@ -8,6 +8,7 @@ use crate::{
     },
     nflog::ULogMessage,
     nftables::NfTablesMessage,
+    none::ControlMessage,
 };
 use netlink_packet_core::{
     buffer, fields, DecodeError, DefaultNla, ErrorContext, NlaBuffer,
@@ -55,6 +56,11 @@ impl<'a, T: AsRef<[u8]> + ?Sized>
         let subsys = (message_type >> 8) as u8;
         let message_type = message_type as u8;
         let inner = match Subsystem::from(subsys) {
+            Subsystem::None => NetfilterMessageInner::None(
+                ControlMessage::parse_with_param(buf, message_type).context(
+                    "failed to parse nfnetlink control message payload",
+                )?,
+            ),
             Subsystem::ULog => NetfilterMessageInner::ULog(
                 ULogMessage::parse_with_param(buf, message_type)
                     .context("failed to parse nflog payload")?,
